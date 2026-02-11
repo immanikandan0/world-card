@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Love Explosion</title>
+
+<!-- Better Romantic Font -->
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+
+<style>
+body{
+  margin:0;
+  overflow:hidden;
+  background:#111;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+#btn{
+  padding:18px 40px;
+  font-size:22px;
+  border:none;
+  border-radius:40px;
+  background:red;
+  color:white;
+  cursor:pointer;
+  box-shadow:0 0 20px red;
+}
+
+canvas{
+  position:fixed;
+  top:0;
+  left:0;
+  display:none;
+}
+</style>
+</head>
+<body>
+
+<button id="btn">Click</button>
+<canvas id="canvas"></canvas>
+
+<script>
+const btn = document.getElementById("btn");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let stars = [];
+let particles = [];
+let state = "idle";
+let heartScale = 1;
+let pulse = 0;
+let textScale = 0;
+let textGlow = 0;
+let floatY = 0;
+
+// Create starfield
+for(let i=0;i<400;i++){
+  stars.push({
+    x: Math.random()*canvas.width,
+    y: Math.random()*canvas.height,
+    size: Math.random()*2,
+    alpha: Math.random(),
+    twinkleSpeed: Math.random()*0.02
+  });
+}
+
+btn.onclick = () => {
+  btn.style.display = "none";
+  canvas.style.display = "block";
+  state = "pulse";
+};
+
+function createExplosion(){
+  for(let i=0;i<250;i++){
+    particles.push({
+      x:canvas.width/2,
+      y:canvas.height/2,
+      angle:Math.random()*Math.PI*2,
+      speed:Math.random()*8+3,
+      size:Math.random()*3+1,
+      alpha:1
+    });
+  }
+}
+
+function drawStars(){
+  stars.forEach(s=>{
+    s.alpha += s.twinkleSpeed;
+    if(s.alpha > 1 || s.alpha < 0){
+      s.twinkleSpeed *= -1;
+    }
+
+    ctx.globalAlpha = s.alpha;
+    ctx.fillStyle="white";
+    ctx.fillRect(s.x, s.y, s.size, s.size);
+    ctx.globalAlpha = 1;
+  });
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // STAR BACKGROUND
+  drawStars();
+
+  // HEART PULSE
+  if(state === "pulse"){
+    pulse += 0.08;
+    heartScale = 1 + Math.sin(pulse)*0.2;
+
+    ctx.font = `${120*heartScale}px Arial`;
+    ctx.textAlign="center";
+    ctx.fillStyle="red";
+    ctx.fillText("❤", canvas.width/2, canvas.height/2);
+
+    if(pulse > 6){
+      state = "explode";
+      createExplosion();
+    }
+  }
+
+  // EXPLOSION
+  if(state === "explode" || state === "text"){
+    particles.forEach(p=>{
+      p.x += Math.cos(p.angle)*p.speed;
+      p.y += Math.sin(p.angle)*p.speed;
+      p.alpha -= 0.01;
+
+      ctx.globalAlpha = p.alpha;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+      ctx.fillStyle="white";
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+
+    if(state === "explode"){
+      state = "text";
+    }
+  }
+
+  // TEXT
+  if(state === "text"){
+    if(textScale < 1){
+      textScale += 0.02;
+    }
+
+    textGlow += 0.05;
+    floatY = Math.sin(textGlow) * 5;
+
+    ctx.save();
+    ctx.translate(canvas.width/2, canvas.height/2 + floatY);
+    ctx.scale(textScale, textScale);
+
+    let gradient = ctx.createLinearGradient(-200,0,200,0);
+    gradient.addColorStop(0,"#ff4d6d");
+    gradient.addColorStop(0.5,"#ffffff");
+    gradient.addColorStop(1,"#ff4d6d");
+
+    ctx.font="90px 'Great Vibes'";
+    ctx.textAlign="center";
+
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = "#ff4d6d";
+
+    ctx.fillStyle=gradient;
+    ctx.fillText("Love You mani", 0, 0);
+
+    ctx.restore();
+  }
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+
+</body>
+</html>
